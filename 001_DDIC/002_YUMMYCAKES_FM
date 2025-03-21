@@ -1,0 +1,64 @@
+FUNCTION z23_newcustomer.
+*"----------------------------------------------------------------------
+*"*"Local Interface:
+*"  IMPORTING
+*"     REFERENCE(IM_NAME) TYPE  S_CUSTNAME
+*"     REFERENCE(IM_EMAIL) TYPE  S_EMAIL
+*"     REFERENCE(IM_CITY) TYPE  CITY
+*"     REFERENCE(IM_CUSTOMERTYPE) TYPE  Z023CTYPE DEFAULT 'R'
+*"  EXPORTING
+*"     REFERENCE(EX_CUSTOMERID) TYPE  Z023CID
+*"  EXCEPTIONS
+*"      DB_ERROR
+*"----------------------------------------------------------------------
+
+*"----------------------------------------------------------------------
+*"*"Local Interface:
+*"  IMPORTING
+*"     REFERENCE(IM_NAME) TYPE  S_CUSTNAME.
+*"     REFERENCE(IM_EMAIL) TYPE  S_EMAIL.
+*"     REFERENCE(IM_CITY) TYPE  CITY.
+*"     REFERENCE(IM_CUSTOMERTYPE) TYPE  Z023CTYPE DEFAULT 'R'.
+*"  EXPORTING
+*"     REFERENCE(EX_CUSTOMERID) TYPE  Z023CID.
+*"  EXCEPTIONS
+*"      DB_ERROR.
+*"----------------------------------------------------------------------
+
+  DATA: lv_custid TYPE z023cid.
+  DATA: lv_custid1 TYPE z023cid.
+  DATA: lv_num TYPE i.
+
+  SELECT MAX( customer_id ) FROM z023customer INTO lv_custid.
+
+  IF lv_custid IS INITIAL.
+    lv_custid = 'C0001'.
+  ELSE.
+    lv_custid1 = lv_custid+1(4).
+    lv_num = lv_custid1.
+    lv_num = lv_num + 1.
+
+    IF lv_num < 10.
+      lv_custid = 'C' && '000' && lv_num.
+    ELSEIF lv_num < 100 AND lv_num > 10.
+      lv_custid = 'C' && '00' && lv_num.
+    ELSEIF lv_num < 1000 AND lv_num > 100.
+      lv_custid = 'C' && '0' && lv_num.
+    ENDIF.
+  ENDIF.
+
+  " Creating a new record in the Customer Table 'zdt_023customer'.
+  DATA: ls_ws TYPE z023customer.
+  ls_ws-customer_name = im_name.
+  ls_ws-customer_id = lv_custid.
+
+  " Inserting the record into Customer Table 'zdt_023customer'.
+  INSERT z023customer FROM ls_ws.
+
+  IF sy-subrc <> 0.
+    RAISE db_error.
+  ELSE.
+    ex_customerid = lv_custid.
+  ENDIF.
+
+ENDFUNCTION.
