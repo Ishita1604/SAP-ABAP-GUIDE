@@ -1,0 +1,103 @@
+*&---------------------------------------------------------------------*
+*& Report ZRPR23_YUMMYCAKES
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+REPORT zrpr23_yummycakes.
+
+** ------------------------- 1) To test the working of function module 'Z23_NEWCUSTOMER' --------------------------------------- **
+**                              If customer successfully created, display Customer ID, else raise an error.
+
+DATA: lv_cid TYPE zdt_023customer-customer_id.
+CALL FUNCTION 'Z23_NEWCUSTOMER'
+  EXPORTING
+    im_name         = 'Arun'
+    im_email        = 'arun123@gmail.com'
+    im_city         = 'Bangalore'
+    im_customertype = 'R'
+  IMPORTING
+    ex_customerid   = lv_cid
+  EXCEPTIONS
+    db_error        = 1
+    OTHERS          = 2.
+
+IF sy-subrc = 1.
+  MESSAGE 'DB_ERROR' TYPE 'E'.
+ELSE.
+  WRITE: 'Customer ID:', lv_cid.
+ENDIF.
+
+** ------------------------------------------------------------------------------------------------------------------------------ **
+** ------------------------- 2) To create an object with Customer ID as 'C0002' & validate the customer ------------------------- **
+
+DATA: cref TYPE REF TO zcl_23ordering.
+CREATE OBJECT cref
+  EXPORTING
+    im_customerid = 'C0002'                " Customer ID.
+  EXCEPTIONS
+    invalid_cust  = 1                      " Invalid Customer.
+    OTHERS        = 2.
+
+IF sy-subrc = 1.
+  MESSAGE 'INVALID_CUST' TYPE 'E'.
+ENDIF.
+
+** ------------------------------------------------------------------------------------------------------------------------------ **
+** ------------------------- 3) To call method 'CALCULATE_PRICE()' and print Total Price for cake with No Toppings -------------- **
+
+DATA: lv_total TYPE z023cake-price.
+
+CALL METHOD cref->calculate_price
+  EXPORTING
+    im_cakeid        = '01'                " Cake ID.
+    im_extratoppings = ''
+  IMPORTING
+    ex_totalcost     = lv_total          " Price of the Cake.
+  EXCEPTIONS
+    invalid_cake     = 1                  " Invalid Cake.
+    OTHERS           = 2.
+
+IF sy-subrc = 1.
+  MESSAGE 'INVALID CAKE' TYPE 'E'.
+ELSE.
+  WRITE: 'Cake Price Without Topping:', lv_total.
+ENDIF.
+
+** ------------------------------------------------------------------------------------------------------------------------------ **
+** ------------------------- 4) To call method 'CALCULATE_PRICE()' and print Total Price for cake with Extra Toppings ----------- **
+
+CALL METHOD cref->calculate_price
+  EXPORTING
+    im_cakeid        = '01'                " Cake ID.
+    im_extratoppings = 'X'
+  IMPORTING
+    ex_totalcost     = lv_total            " Price of the Cake.
+  EXCEPTIONS
+    invalid_cake     = 1                   " Invalid Cake.
+    OTHERS           = 2.
+
+IF sy-subrc = 1.
+  MESSAGE 'INVALID CAKE' TYPE 'E'.
+ELSE.
+  WRITE:/ 'Cake Price With Topping:', lv_total.
+ENDIF.
+
+** ------------------------------------------------------------------------------------------------------------------------------ **
+** ------------- 5) Create object for the class ZCL_23ORDERING and pass Customer ID as 'C0073' and Handle the exception --------- **
+
+DATA: creff TYPE REF TO zcl_23ordering.
+CREATE OBJECT creff
+  EXPORTING
+    im_customerid = 'C0073'                 " Customer ID.
+  EXCEPTIONS
+    invalid_cust  = 1                       " Invalid Customer.
+    OTHERS        = 2.
+
+IF sy-subrc = 1.
+  MESSAGE 'INVALID CUSTOMER' TYPE 'E'.
+ENDIF.
+
+** ------------------------------------------------------------------------------------------------------------------------------ **
+
+
+** -------------------------- 6) Got all valid and invalid testings in both FM and classes and printed them accordingly --------- **
